@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " O ",
+    "#E#",
+    " # "
+  ],
+  "key": {
+    "O": {
+      "tag": "forge:glass/orange"
+    },
+    "E": {
+      "item": "togglyfiers:ender_cube"
+    },
+    "#": {
+      "tag": "forge:ingots/iron"
+    }
+  },
+  "result": {
+    "item": "togglyfiers:togglyfication_core",
+    "count": 1
+  }
+}
