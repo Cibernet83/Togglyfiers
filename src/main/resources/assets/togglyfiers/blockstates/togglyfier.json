@@ -1,5 +1,13 @@
 {
     "variants": {
-        "": { "model": "togglyfiers:block/togglyfier" }
+        "edit_mode=true": {
+            "model": "togglyfiers:block/togglyfier_edit"
+        },
+        "edit_mode=false,toggled=true": {
+            "model": "togglyfiers:block/togglyfier_on"
+        },
+        "edit_mode=false,toggled=false": {
+            "model": "togglyfiers:block/togglyfier_off"
+        }
     }
 }

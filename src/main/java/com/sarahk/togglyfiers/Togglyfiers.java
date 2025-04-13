@@ -1,9 +1,7 @@
 package com.sarahk.togglyfiers;
 
 import com.mojang.logging.LogUtils;
-import com.sarahk.togglyfiers.registries.TogglyfiersBlocks;
-import com.sarahk.togglyfiers.registries.TogglyfiersCreativeTabs;
-import com.sarahk.togglyfiers.registries.TogglyfiersItems;
+import com.sarahk.togglyfiers.registries.*;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -14,13 +12,15 @@ import org.slf4j.Logger;
 @Mod(Togglyfiers.MODID)
 public class Togglyfiers {
 	public static final String MODID = "togglyfiers";
-	private static final Logger LOGGER = LogUtils.getLogger();
+	public static final Logger LOGGER = LogUtils.getLogger();
 
 	public Togglyfiers(IEventBus modEventBus, ModContainer modContainer) {
 
 		TogglyfiersBlocks.register(modEventBus);
 		TogglyfiersItems.register(modEventBus);
 		TogglyfiersCreativeTabs.register(modEventBus);
+		TogglyfiersBlockEntities.register(modEventBus);
+		TogglyfiersDataComponents.register(modEventBus);
 
 		modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 	}
