@@ -1,5 +1,5 @@
 {
     "variants": {
-        "normal": { "model": "exampleaddon:togglyfier" }
+        "": { "model": "togglyfiers:block/togglyfier" }
     }
 }

@@ -1,5 +1,18 @@
 {
-  "itemGroup.togglyfiers": "Example Mod Tab",
-  "block.togglyfiers.example_block": "Example Block",
-  "item.togglyfiers.example_item": "Example Item"
+  "itemGroup.togglyfiers.general": "Togglyfication",
+
+  "block.togglyfiers.togglyfier": "Togglyfier",
+  "block.togglyfiers.change_block": "Change Block",
+  "block.togglyfiers.change_block.tooltip": "Bound to Togglyfier at [%s0, %s1, %s2]",
+
+  "item.togglyfiers.togglyfication_core": "Togglyfication Core",
+
+  "gui.togglyfiers.togglyfier.change_blocks": "Change Blocks",
+  "gui.togglyfiers.togglyfier.quick_place": "Quick-Place",
+  "gui.togglyfiers.togglyfier.edit_mode": "Edit Mode",
+  "gui.togglyfiers.togglyfier.edit_mode_on": "ON",
+  "gui.togglyfiers.togglyfier.edit_mode_off": "OFF",
+
+  "gui.togglyfiers.change_block.on": "On",
+  "gui.togglyfiers.change_block.off": "Off"
 }
