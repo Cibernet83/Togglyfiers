@@ -2,6 +2,7 @@ package com.sarahk.togglyfiers;
 
 import com.mojang.logging.LogUtils;
 import com.sarahk.togglyfiers.registries.TogglyfiersBlocks;
+import com.sarahk.togglyfiers.registries.TogglyfiersCreativeTabs;
 import com.sarahk.togglyfiers.registries.TogglyfiersItems;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
@@ -19,6 +20,7 @@ public class Togglyfiers {
 
 		TogglyfiersBlocks.register(modEventBus);
 		TogglyfiersItems.register(modEventBus);
+		TogglyfiersCreativeTabs.register(modEventBus);
 
 		modContainer.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
 	}
