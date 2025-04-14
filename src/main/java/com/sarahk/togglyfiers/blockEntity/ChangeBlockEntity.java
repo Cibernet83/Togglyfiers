@@ -15,9 +15,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.UUID;
 
@@ -26,6 +26,8 @@ public class ChangeBlockEntity extends BlockEntity {
 	private TogglyfierBlockEntity owner;
 	private boolean destroyed = true;
 
+	private ResourceKey<Level> ownerLevel;
+	private UUID ownerId;
 
 	public ChangeBlockEntity(BlockPos pos, BlockState blockState) {
 		super(TogglyfiersBlockEntities.CHANGE_BLOCK.get(), pos, blockState);
@@ -33,26 +35,34 @@ public class ChangeBlockEntity extends BlockEntity {
 
 	public void setOwner(ServerLevel ownerLevel, UUID ownerId, boolean updateOwner) {
 		if (ownerLevel != null && ownerLevel.getBlockEntity(TogglyfiersSaveData.getTogglyfierPos(ownerLevel, ownerId)) instanceof TogglyfierBlockEntity togglyfier)
+		{
+			this.ownerLevel = ownerLevel.dimension();
+			this.ownerId = ownerId;
 			setOwner(togglyfier, updateOwner);
+		}
 	}
 
 	public void setOwner(TogglyfierBlockEntity owner, boolean updateOwner) {
 
-		if (updateOwner && this.owner != owner) {
-			if (this.owner != null)
-				this.owner.removeChangeBlock(this);
-			if (owner != null)
-				owner.addChangeBlock(this);
+		if (updateOwner) {
+			if (this.getOwner() != null)
+				this.getOwner().removeChangeBlock(this);
+			if (getOwner() != null)
+				getOwner().addChangeBlock(this);
 		}
 
 		this.owner = owner;
 	}
 
 	public boolean hasOwner() {
-		return owner != null;
+		return getOwner() != null;
 	}
 
 	public TogglyfierBlockEntity getOwner() {
+
+		if(owner == null && ownerLevel != null && ownerId != null && getLevel() instanceof ServerLevel serverLevel)
+			setOwner(serverLevel.getServer().getLevel(ownerLevel), ownerId, false);
+
 		return owner;
 	}
 
@@ -64,9 +74,9 @@ public class ChangeBlockEntity extends BlockEntity {
 	protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
 		super.saveAdditional(tag, registries);
 
-		if (owner != null && owner.hasLevel()) {
-			tag.putString("owner_dimension", owner.getLevel().dimension().location().toString());
-			tag.putUUID("owner_id", owner.getId());
+		if (getOwner() != null && getOwner().hasLevel() && getOwner().getId() != null) {
+			tag.putString("owner_dimension", getOwner().getLevel().dimension().location().toString());
+			tag.putUUID("owner_id", getOwner().getId());
 		}
 
 	}
@@ -75,9 +85,11 @@ public class ChangeBlockEntity extends BlockEntity {
 	protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
 		super.loadAdditional(tag, registries);
 
-		if (tag.hasUUID("owner_id") && tag.contains("owner_dimension", CompoundTag.TAG_STRING) && ServerLifecycleHooks.getCurrentServer() != null)
-			setOwner(ServerLifecycleHooks.getCurrentServer().getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("owner_dimension")))), tag.getUUID("owner_id"), false);
-
+		if(tag.hasUUID("owner_id") && tag.contains("owner_dimension", CompoundTag.TAG_STRING))
+		{
+			ownerId = tag.getUUID("owner_id");
+			ownerLevel = ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("owner_dimension")));
+		}
 	}
 
 	@Override
@@ -94,8 +106,8 @@ public class ChangeBlockEntity extends BlockEntity {
 	protected void collectImplicitComponents(DataComponentMap.Builder components) {
 		super.collectImplicitComponents(components);
 
-		if (owner != null)
-			components.set(TogglyfiersDataComponents.TOGGLYFIER_OWNER, new TogglyOwnerComponent(owner.getLevel().dimension(), owner.getId()));
+		if (getOwner() != null)
+			components.set(TogglyfiersDataComponents.TOGGLYFIER_OWNER, new TogglyOwnerComponent(getOwner().getLevel().dimension(), getOwner().getId()));
 	}
 
 	public void removeWithoutDestroying() {

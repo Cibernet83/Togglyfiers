@@ -1,5 +1,6 @@
 package com.sarahk.togglyfiers;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
 import com.sarahk.togglyfiers.registries.*;
 import net.minecraft.resources.ResourceLocation;
@@ -9,10 +10,13 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import org.slf4j.Logger;
 
+import java.util.UUID;
+
 @Mod(Togglyfiers.MODID)
 public class Togglyfiers {
 	public static final String MODID = "togglyfiers";
 	public static final Logger LOGGER = LogUtils.getLogger();
+	public static final GameProfile FAKE_PLAYER_PROFILE = new GameProfile(UUID.randomUUID(), "John Toggly");
 
 	public Togglyfiers(IEventBus modEventBus, ModContainer modContainer) {
 

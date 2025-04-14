@@ -1,6 +1,8 @@
 package com.sarahk.togglyfiers.blockEntity;
 
 import com.sarahk.togglyfiers.Togglyfiers;
+import com.sarahk.togglyfiers.api.behavior.*;
+import com.sarahk.togglyfiers.api.event.RegisterToggleBehaviorsEvent;
 import com.sarahk.togglyfiers.block.ChangeBlock;
 import com.sarahk.togglyfiers.block.TogglyfierBlock;
 import com.sarahk.togglyfiers.data.TogglyfiersSaveData;
@@ -16,23 +18,53 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.common.NeoForge;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class TogglyfierBlockEntity extends BlockEntity {
+
+	private static final List<ToggleBehavior> TOGGLE_BEHAVIORS = new ArrayList<>() {{
+
+		add(new EmptyBehavior());
+		add(new BlockPlaceBehavior());
+		sort(ToggleBehavior::compare);
+	}};
 
 	private UUID id;
 	private final List<ChangeBlock.Entry> changeBlocks = new ArrayList<>();
 
 	public TogglyfierBlockEntity(BlockPos pos, BlockState blockState) {
 		super(TogglyfiersBlockEntities.TOGGLYFIER.value(), pos, blockState);
+	}
+
+	public void placeDown(ChangeBlock.Entry changeBlock, boolean enabled) {
+
+		ItemStack stack = enabled ? changeBlock.getEnabledStack() : changeBlock.getDisabledStack();
+		CompoundTag additional = enabled ? changeBlock.getEnabledAdditional() : changeBlock.getDisabledAdditional();
+
+		for (ToggleBehavior toggleBehavior : TOGGLE_BEHAVIORS.stream().filter(toggleBehavior -> toggleBehavior.applicableTo(stack)).collect(Collectors.toSet())) {
+			if(toggleBehavior.placeDown(changeBlock.getLevel(), changeBlock.getPos(), changeBlock.getDirection(), stack, additional).consumesAction())
+				return;
+		}
+	}
+	public void pickUp(ChangeBlock.Entry changeBlock, boolean enabled) {
+
+		ItemStack stack = enabled ? changeBlock.getEnabledStack() : changeBlock.getDisabledStack();
+		CompoundTag additional = enabled ? changeBlock.getEnabledAdditional() : changeBlock.getDisabledAdditional();
+
+		for (ToggleBehavior toggleBehavior : TOGGLE_BEHAVIORS.stream().filter(toggleBehavior -> toggleBehavior.applicableTo(stack)).collect(Collectors.toSet())) {
+			if(toggleBehavior.pickUp(changeBlock.getLevel(), changeBlock.getPos(), changeBlock.getDirection(), stack, additional).consumesAction())
+				return;
+		}
 	}
 
 	public boolean isToggled() {
@@ -43,22 +75,25 @@ public class TogglyfierBlockEntity extends BlockEntity {
 		return getBlockState().getValue(TogglyfierBlock.EDIT_MODE);
 	}
 
-	public void setChangeBlockToggle(ChangeBlock.Entry changeBlock, boolean value) {
-		changeBlock.getLevel().setBlock(changeBlock.getPos(), value ?
-				Blocks.LIME_WOOL.defaultBlockState() : Blocks.RED_WOOL.defaultBlockState(), Block.UPDATE_ALL);
-	}
 
 	public void setToggled(boolean value) {
+
+		if(!hasLevel() || value == isToggled())
+			return;
 
 		getLevel().setBlock(getBlockPos(), getBlockState().setValue(TogglyfierBlock.TOGGLED, value), Block.UPDATE_ALL);
 
 		if(!isInEditMode())
 			for (ChangeBlock.Entry changeBlock : changeBlocks) {
-				setChangeBlockToggle(changeBlock, value);
+				pickUp(changeBlock, !value);
+				placeDown(changeBlock, value);
 			}
 	}
 
 	public void setInEditMode(boolean value) {
+
+		if(!hasLevel() || value == isInEditMode())
+			return;
 
 		getLevel().setBlock(getBlockPos(), getBlockState().setValue(TogglyfierBlock.EDIT_MODE, value), Block.UPDATE_ALL);
 
@@ -66,8 +101,16 @@ public class TogglyfierBlockEntity extends BlockEntity {
 		for (ChangeBlock.Entry changeBlock : changeBlocks) {
 
 			if(value)
+			{
 				changeBlock.getLevel().setBlock(changeBlock.getPos(), TogglyfiersBlocks.CHANGE_BLOCK.get().defaultBlockState().setValue(ChangeBlock.FACING, changeBlock.getDirection()), Block.UPDATE_ALL);
-			else setChangeBlockToggle(changeBlock, toggled);
+				if(changeBlock.getLevel().getBlockEntity(changeBlock.getPos()) instanceof ChangeBlockEntity blockEntity)
+					blockEntity.setOwner(this, false);
+			}
+			else {
+				if(changeBlock.getLevel().getBlockEntity(changeBlock.getPos()) instanceof ChangeBlockEntity blockEntity)
+					blockEntity.removeWithoutDestroying();
+				placeDown(changeBlock, toggled);
+			};
 		}
 	}
 
@@ -80,11 +123,11 @@ public class TogglyfierBlockEntity extends BlockEntity {
 	}
 
 	public ItemStack getDefaultEnabled() {
-		return ItemStack.EMPTY;
+		return Items.LIME_WOOL.getDefaultInstance();
 	}
 
 	public ItemStack getDefaultDisabled() {
-		return ItemStack.EMPTY;
+		return Items.RED_WOOL.getDefaultInstance();
 	}
 
 	public void addChangeBlock(@NonNull ChangeBlockEntity changeBlock) {

@@ -94,9 +94,9 @@ public class ChangeBlock extends DirectionalBlock implements EntityBlock {
 			if(!enabledStack.isEmpty())
 				tag.put("enabled_item", enabledStack.save(registryAccess));
 			if(!enabledAdditional.isEmpty())
-				tag.put("disabled_item", enabledStack.save(registryAccess));
-			if(!disabledStack.isEmpty())
 				tag.put("enabled_data", enabledAdditional);
+			if(!disabledStack.isEmpty())
+				tag.put("disabled_item", disabledStack.save(registryAccess));
 			if(!disabledAdditional.isEmpty())
 				tag.put("disabled_data", disabledAdditional);
 
