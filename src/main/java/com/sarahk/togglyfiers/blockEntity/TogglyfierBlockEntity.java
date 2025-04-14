@@ -36,6 +36,8 @@ public class TogglyfierBlockEntity extends BlockEntity {
 
 		add(new EmptyBehavior());
 		add(new BlockPlaceBehavior());
+
+		NeoForge.EVENT_BUS.post(new RegisterToggleBehaviorsEvent(this));
 		sort(ToggleBehavior::compare);
 	}};
 
