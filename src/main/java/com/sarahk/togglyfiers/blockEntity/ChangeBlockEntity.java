@@ -27,14 +27,14 @@ public class ChangeBlockEntity extends BlockEntity {
 		super(TogglyfiersBlockEntities.CHANGE_BLOCK.get(), pos, blockState);
 	}
 
-	public void setOwner(ServerLevel ownerLevel, UUID ownerId) {
+	public void setOwner(ServerLevel ownerLevel, UUID ownerId, boolean updateOwner) {
 		if (ownerLevel != null && ownerLevel.getBlockEntity(TogglyfiersSaveData.getTogglyfierPos(ownerLevel, ownerId)) instanceof TogglyfierBlockEntity togglyfier)
-			setOwner(togglyfier);
+			setOwner(togglyfier, updateOwner);
 	}
 
-	public void setOwner(TogglyfierBlockEntity owner) {
+	public void setOwner(TogglyfierBlockEntity owner, boolean updateOwner) {
 
-		if (this.owner != owner) {
+		if (updateOwner && this.owner != owner) {
 			if (this.owner != null)
 				this.owner.removeChangeBlock(this);
 			if (owner != null)
@@ -68,7 +68,7 @@ public class ChangeBlockEntity extends BlockEntity {
 		super.loadAdditional(tag, registries);
 
 		if (tag.hasUUID("owner_id") && tag.contains("owner_dimension", CompoundTag.TAG_STRING) && getLevel() instanceof ServerLevel serverLevel)
-			setOwner(serverLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("owner_dimension")))), tag.getUUID("owner_id"));
+			setOwner(serverLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("owner_dimension")))), tag.getUUID("owner_id"), false);
 
 	}
 
@@ -78,7 +78,7 @@ public class ChangeBlockEntity extends BlockEntity {
 		TogglyOwnerComponent owner = componentInput.get(TogglyfiersDataComponents.TOGGLYFIER_OWNER);
 
 		if (owner != null && getLevel() instanceof ServerLevel serverLevel)
-			setOwner(serverLevel.getServer().getLevel(owner.levelKey()), owner.id());
+			setOwner(serverLevel.getServer().getLevel(owner.levelKey()), owner.id(), true);
 
 	}
 

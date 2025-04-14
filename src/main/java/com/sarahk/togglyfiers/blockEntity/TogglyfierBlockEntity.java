@@ -12,6 +12,8 @@ import com.sarahk.togglyfiers.registries.TogglyfiersItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -42,7 +44,7 @@ public class TogglyfierBlockEntity extends BlockEntity {
 	}
 
 	public void setChangeBlockToggle(ChangeBlock.Entry changeBlock, boolean value) {
-		changeBlock.level().setBlock(changeBlock.pos(), value ?
+		changeBlock.getLevel().setBlock(changeBlock.getPos(), value ?
 				Blocks.LIME_WOOL.defaultBlockState() : Blocks.RED_WOOL.defaultBlockState(), Block.UPDATE_ALL);
 	}
 
@@ -64,7 +66,7 @@ public class TogglyfierBlockEntity extends BlockEntity {
 		for (ChangeBlock.Entry changeBlock : changeBlocks) {
 
 			if(value)
-				changeBlock.level().setBlock(changeBlock.pos(), TogglyfiersBlocks.CHANGE_BLOCK.get().defaultBlockState().setValue(ChangeBlock.FACING, changeBlock.direction()), Block.UPDATE_ALL);
+				changeBlock.getLevel().setBlock(changeBlock.getPos(), TogglyfiersBlocks.CHANGE_BLOCK.get().defaultBlockState().setValue(ChangeBlock.FACING, changeBlock.getDirection()), Block.UPDATE_ALL);
 			else setChangeBlockToggle(changeBlock, toggled);
 		}
 	}
@@ -93,7 +95,7 @@ public class TogglyfierBlockEntity extends BlockEntity {
 			Togglyfiers.LOGGER.atError().log("Attempted to add Change Block ${} to Togglyfier at ${} on the client.", changeBlock.getBlockPos(), getBlockPos());
 		else {
 			removeChangeBlock(changeBlock);
-			changeBlocks.add(new ChangeBlock.Entry(serverLevel, changeBlock.getBlockPos(), changeBlock.getFacing(), getDefaultEnabled().split(1), getDefaultDisabled().split(1), new CompoundTag(), new CompoundTag()));
+			changeBlocks.add(new ChangeBlock.Entry(serverLevel, changeBlock.getBlockPos(), changeBlock.getFacing(), getDefaultEnabled().split(1), getDefaultDisabled().split(1)));
 		}
 	}
 
@@ -103,7 +105,7 @@ public class TogglyfierBlockEntity extends BlockEntity {
 		else if (!(changeBlock.getLevel() instanceof ServerLevel serverLevel))
 			Togglyfiers.LOGGER.atError().log("Attempted to remove Change Block ${} from Togglyfier at ${} on the client.", changeBlock.getBlockPos(), getBlockPos());
 		else
-			return changeBlocks.removeIf(entry -> entry.level().equals(changeBlock.getLevel()) && entry.pos().equals(changeBlock.getBlockPos()));
+			return changeBlocks.removeIf(entry -> entry.getLevel().equals(changeBlock.getLevel()) && entry.getPos().equals(changeBlock.getBlockPos()));
 		return false;
 	}
 
@@ -130,10 +132,13 @@ public class TogglyfierBlockEntity extends BlockEntity {
 		if (tag.hasUUID("togglyfier_id"))
 			id = tag.getUUID("togglyfier_id");
 
-		if (!level.isClientSide())
+		if (hasLevel() && !getLevel().isClientSide())
 			TogglyfiersSaveData.indexTogglyfier(this);
 
-		//TODO load and save change blocks
+		changeBlocks.clear();
+		ListTag list = tag.getList("change_blocks", Tag.TAG_COMPOUND);
+		for (int i = 0; i < list.size(); i++)
+			changeBlocks.add(ChangeBlock.Entry.fromNbt(list.getCompound(i), registries));
 	}
 
 	@Override
@@ -142,5 +147,9 @@ public class TogglyfierBlockEntity extends BlockEntity {
 
 		if (id != null)
 			tag.putUUID("togglyfier_id", id);
+
+		ListTag list = new ListTag();
+		changeBlocks.forEach(entry -> list.add(entry.toNbt(registries)));
+		tag.put("change_blocks", list);
 	}
 }
