@@ -32,14 +32,10 @@ public class ChangeBlock extends DirectionalBlock implements EntityBlock {
 	}
 
 	@Override
-	protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
-		super.onPlace(state, level, pos, oldState, movedByPiston);
-
-
-	}
-
-	@Override
 	protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+
+		if(!level.isClientSide() && level.getBlockEntity(pos) instanceof ChangeBlockEntity changeBlock && changeBlock.hasOwner() && changeBlock.isDestroyed())
+			changeBlock.getOwner().removeChangeBlock(changeBlock);
 		super.onRemove(state, level, pos, newState, movedByPiston);
 	}
 

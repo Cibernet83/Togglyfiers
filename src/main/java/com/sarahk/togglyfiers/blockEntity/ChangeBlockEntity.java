@@ -1,5 +1,6 @@
 package com.sarahk.togglyfiers.blockEntity;
 
+import com.sarahk.togglyfiers.api.behavior.ToggleBehavior;
 import com.sarahk.togglyfiers.block.ChangeBlock;
 import com.sarahk.togglyfiers.data.TogglyfiersSaveData;
 import com.sarahk.togglyfiers.data.components.TogglyOwnerComponent;
@@ -16,12 +17,15 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.UUID;
 
 public class ChangeBlockEntity extends BlockEntity {
 
 	private TogglyfierBlockEntity owner;
+	private boolean destroyed = true;
+
 
 	public ChangeBlockEntity(BlockPos pos, BlockState blockState) {
 		super(TogglyfiersBlockEntities.CHANGE_BLOCK.get(), pos, blockState);
@@ -42,6 +46,10 @@ public class ChangeBlockEntity extends BlockEntity {
 		}
 
 		this.owner = owner;
+	}
+
+	public boolean hasOwner() {
+		return owner != null;
 	}
 
 	public TogglyfierBlockEntity getOwner() {
@@ -67,8 +75,8 @@ public class ChangeBlockEntity extends BlockEntity {
 	protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
 		super.loadAdditional(tag, registries);
 
-		if (tag.hasUUID("owner_id") && tag.contains("owner_dimension", CompoundTag.TAG_STRING) && getLevel() instanceof ServerLevel serverLevel)
-			setOwner(serverLevel.getServer().getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("owner_dimension")))), tag.getUUID("owner_id"), false);
+		if (tag.hasUUID("owner_id") && tag.contains("owner_dimension", CompoundTag.TAG_STRING) && ServerLifecycleHooks.getCurrentServer() != null)
+			setOwner(ServerLifecycleHooks.getCurrentServer().getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.parse(tag.getString("owner_dimension")))), tag.getUUID("owner_id"), false);
 
 	}
 
@@ -88,5 +96,14 @@ public class ChangeBlockEntity extends BlockEntity {
 
 		if (owner != null)
 			components.set(TogglyfiersDataComponents.TOGGLYFIER_OWNER, new TogglyOwnerComponent(owner.getLevel().dimension(), owner.getId()));
+	}
+
+	public void removeWithoutDestroying() {
+		destroyed = false;
+		ToggleBehavior.removeBlock(getLevel(), getBlockPos());
+	}
+
+	public boolean isDestroyed() {
+		return destroyed;
 	}
 }
